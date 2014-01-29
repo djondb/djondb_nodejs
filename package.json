@@ -1,0 +1,18 @@
+{
+  "name": "djondb",
+  "version": "0.3.2",
+  "description": "djondb driver for nodejs",
+  "main": "./build/Release/djondb",
+  "scripts": {
+    "install": "node build.js"
+  },
+  "repository": "",
+  "keywords": [
+    "djondb",
+    "nosql"
+  ],
+  "author": "Juan Pablo Crossley",
+  "license": "GPL",
+  "gypfile": true,
+  "readmeFilename": "README"
+}
