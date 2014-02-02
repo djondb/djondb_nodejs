@@ -1,4 +1,15 @@
-djondb_nodejs
-=============
+djondb nodejs module
+====================
 
-nodejs driver for djondb
+
+Prerrequisites
+==============
+
+node-gyp
+
+Build
+=====
+
+node build.js
+
+
