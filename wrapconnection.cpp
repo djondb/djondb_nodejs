@@ -242,8 +242,6 @@ v8::Handle<v8::Value> WrapConnection::find(const v8::Arguments& args) {
 
 		Handle<Object> result = WrapCursor::NewInstance(cursor);
 
-		printf("find ready \n");
-
 		return scope.Close(result);
 	} catch (ParseException e) {
 		return v8::ThrowException(v8::String::New("the filter expression contains an error\n"));
