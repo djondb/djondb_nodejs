@@ -37,6 +37,12 @@
 
 class BaseExpression;
 class ExpressionResult;
+class Parser;
+
+struct ParserResult {
+	BaseExpression* rootExpression;
+	std::set<std::string> tokens;
+};
 
 class Token {
 	public:
@@ -94,18 +100,19 @@ class FilterParser {
 		~FilterParser();
 		ExpressionResult* eval(const BSONObj& bson);
 		const std::set<std::string> tokens() const;
-		
-		static FilterParser* parse(const std::string& expression) throw(ParseException) ;
+
+		static ParserResult* parse(Parser* parser);
+		static ParserResult* parse(const char* expression);
 		std::set<std::string> xpathTokens();
-			//throw (ParseException);
+		//throw (ParseException);
 
 	private:
-		FilterParser(const std::string& expression, BaseExpression* root, std::list<Token*> tokens);
+		FilterParser(const char* expression, BaseExpression* root, std::list<Token*> tokens);
 		void setTokens(std::set<std::string> tokens);
 
 	private:
-		std::string _expression;
-	   BaseExpression* _root;
+		const char* _expression;
+		BaseExpression* _root;
 		std::list<Token*> _tokens;
 
 		std::set<std::string> _xpathTokens;

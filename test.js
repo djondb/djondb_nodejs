@@ -10,7 +10,7 @@ con.open();
 con.dropNamespace("test_nodejs", "nodens");
 con.insert("test_nodejs", "nodens", { name: "Test" });
 
-var cursor = con.find("test_nodejs", "nodens");
+var cursor = con.executeQuery("select* from test_nodejs:nodens where name == 'Test'");
 
 while (cursor.next()) {
 	var res = cursor.current();
