@@ -44,11 +44,19 @@ function checkExists(path) {
 
 function generateDefs(nodeh) {
 	var fs = require('fs');
+	/*
 	var text = "#ifndef DJONDB_DEFS_H\n";
 	text += "#define DJONDB_DEFS_H\n";
-	text += "#include <" + nodeh + ">\n";
+	text += "#include <node.h>\n";
+	text += "#include <node_object_wrap.h>\n";
+
+	text += "#define THROW_NODE_EXCEPTION(isolate, message) \\\n";
+	text += "	isolate->ThrowException(v8::String::NewFromUtf8(isolate, message)); \\\n";
+
+	text += "	return;\n";
 	text += "#endif // DJONDB_DEFS_H\n";
 	fs.writeFileSync("djondefs.h", text);
+	*/
 }
 
 function checkDependencies() {

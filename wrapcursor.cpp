@@ -36,124 +36,129 @@ using namespace djondb;
 
 Persistent<Function> WrapCursor::constructorCursor;
 
-WrapCursor::WrapCursor() {}
+WrapCursor::WrapCursor(djondb::DjondbCursor* cursor): _cursor(cursor) {}
 WrapCursor::~WrapCursor() {}
 
 void WrapCursor::Init(Handle<Object> target) {
+	v8::Isolate* isolate = target->GetIsolate();
+
 	//Prepare constructor template
-	Local<FunctionTemplate> tpl = FunctionTemplate::New(New);
-	tpl->SetClassName(String::NewSymbol("WrapCursor"));
+	Local<FunctionTemplate> tpl = FunctionTemplate::New(isolate, New);
+	tpl->SetClassName(v8::String::NewFromUtf8(isolate, "WrapCursor"));
 	tpl->InstanceTemplate()->SetInternalFieldCount(1);
 	//Prototype
 	//global->Set(v8::String::New("print"), v8::FunctionTemplate::New(Print));
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("next"),
-			FunctionTemplate::New(next)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("previous"),
-			FunctionTemplate::New(previous)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("current"),
-			FunctionTemplate::New(current)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("length"),
-			FunctionTemplate::New(length)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("releaseCursor"),
-			FunctionTemplate::New(releaseCursor)->GetFunction());
-	tpl->PrototypeTemplate()->Set(String::NewSymbol("seek"),
-			FunctionTemplate::New(seek)->GetFunction());
+	NODE_SET_PROTOTYPE_METHOD(tpl, "next", next);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "previous", previous);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "current", current);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "length", length);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "releaseCursor", releaseCursor);
+	NODE_SET_PROTOTYPE_METHOD(tpl, "seek", seek);
 
-	constructorCursor = Persistent<Function>::New(tpl->GetFunction());
-	//target->Set(String::NewSymbol("WrapCursor"), constructor);
+	constructorCursor.Reset(isolate, tpl->GetFunction());
 }
 
-Handle<Value> WrapCursor::New(const Arguments& args) {
-	HandleScope scope;
+void WrapCursor::New(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	Isolate* isolate = args.GetIsolate();
 
-	WrapCursor* obj = new WrapCursor();
+	if (args.IsConstructCall()) {
+		/* 
+		 * Not sure if this is actually called
+		 * */
+  		Local<External> hcursor = Local<External>::Cast(args[0]->ToObject());
+		djondb::DjondbCursor* cursor = (djondb::DjondbCursor*)hcursor->Value();
 
-	Local<External> external = Local<External>::Cast(args[0]);
-
-	DjondbCursor* cursor = (DjondbCursor*)external->Value();
-	obj->setCursor(cursor);
-	obj->Wrap(args.This());
-
-	return args.This();
+		WrapCursor* wcur = new WrapCursor(cursor);
+		wcur->Wrap(args.Holder());
+		args.GetReturnValue().Set(args.Holder());
+	} else {
+		// Invoked as plain function `MyObject(...)`, turn into construct call.
+		const int argc = 1;
+		Local<Value> argv[argc] = { args[0] };
+		Local<Function> cons = Local<Function>::New(isolate, constructorCursor);
+		args.GetReturnValue().Set(cons->NewInstance(argc, argv));
+	}
 }
 
-Handle<Object> WrapCursor::NewInstance(DjondbCursor* cursor) {
-	HandleScope scope;
+void WrapCursor::NewInstance(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	Isolate* isolate = args.GetIsolate();
 
 	const unsigned argc = 1;
-	Handle<External> external = External::New(cursor);
+	Local<Value> argv[argc] = { args[0] };
+	Local<Function> cons = Local<Function>::New(isolate, constructorCursor);
+	Local<Object> instance = cons->NewInstance(argc, argv);
 
-	Handle<Value> argv[argc] = { external };
-
-	Local<Object> instance = constructorCursor->NewInstance(argc, argv);
-	return scope.Close(instance);
+	args.GetReturnValue().Set(instance);
 }
 
-Handle<Value> WrapCursor::next(const v8::Arguments& args) {
-	HandleScope scope;
+void WrapCursor::next(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	v8::Isolate* isolate = args.GetIsolate();
 
 	WrapCursor* obj = ObjectWrap::Unwrap<WrapCursor>(args.This());
 	bool result = obj->_cursor->next();
 
-	return scope.Close(Boolean::New(result));
+	args.GetReturnValue().Set(Boolean::New(isolate, result));
 }
 
-Handle<Value> WrapCursor::previous(const v8::Arguments& args) {
-	HandleScope scope;
+void WrapCursor::previous(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	v8::Isolate* isolate = args.GetIsolate();
 
 	WrapCursor* obj = ObjectWrap::Unwrap<WrapCursor>(args.This());
 	bool result = obj->_cursor->previous();
 
-	return scope.Close(Boolean::New(result));
+	args.GetReturnValue().Set(Boolean::New(isolate, result));
 }
 
-Handle<Value> WrapCursor::current(const v8::Arguments& args) {
-	HandleScope scope;
+void WrapCursor::current(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	v8::Isolate* isolate = args.GetIsolate();
 
 	WrapCursor* obj = ObjectWrap::Unwrap<WrapCursor>(args.This());
 
 	BSONObj* current = obj->_cursor->current();
 
 	if (current == 0) {
-		return v8::ThrowException(v8::String::New("current is null, you should call next() before calling current()"));
+		THROW_NODE_EXCEPTION(isolate, "current is null, you should call next() before calling current()");
+		return;
 	}
 	printf("current %d \n", current);
 
 	char* str = current->toChar();
 
-	v8::Handle<v8::Value> jsonValue = parseJSON(v8::String::New(str));
+	v8::Handle<v8::Value> jsonValue = parseJSON(isolate, v8::String::NewFromUtf8(isolate, str));
 
-	return scope.Close(jsonValue);
+	args.GetReturnValue().Set(jsonValue);
 }
 
-Handle<Value> WrapCursor::length(const v8::Arguments& args) {
-	HandleScope scope;
+void WrapCursor::length(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	v8::Isolate* isolate = args.GetIsolate();
 
 	WrapCursor* obj = ObjectWrap::Unwrap<WrapCursor>(args.This());
 
 	__int32 current = obj->_cursor->length();
 
-	return scope.Close(v8::Integer::New(current));
+	args.GetReturnValue().Set(v8::Integer::New(isolate, current));
 }
 
-Handle<Value> WrapCursor::releaseCursor(const v8::Arguments& args) {
-	HandleScope scope;
+void WrapCursor::releaseCursor(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	v8::Isolate* isolate = args.GetIsolate();
 
 	WrapCursor* obj = ObjectWrap::Unwrap<WrapCursor>(args.This());
 
 	obj->_cursor->releaseCursor();
 
-	return scope.Close(v8::Undefined());
+	args.GetReturnValue().Set(v8::Undefined(isolate));
 }
 
-v8::Handle<v8::Value> WrapCursor::seek(const v8::Arguments& args) {
+void WrapCursor::seek(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	v8::Isolate* isolate = args.GetIsolate();
 	if (args.Length() < 1) {
-		return v8::ThrowException(v8::String::New("usage: cursor.seek(position)"));
+		THROW_NODE_EXCEPTION(isolate, "usage: cursor.seek(position)");
+		return;
 	}
 
-	v8::HandleScope scope;
 	if (!args[0]->IsInt32()) {
-		return v8::ThrowException(v8::String::New("usage: cursor.seek(position)"));
+		THROW_NODE_EXCEPTION(isolate, "usage: cursor.seek(position)");
+		return;
 	}
 	int pos = args[0]->NumberValue();
 
@@ -162,12 +167,10 @@ v8::Handle<v8::Value> WrapCursor::seek(const v8::Arguments& args) {
 
 		obj->_cursor->seek(pos);
 
-		return scope.Close(v8::Undefined());
+		args.GetReturnValue().Set(v8::Undefined(isolate));
 	} catch (ParseException e) {
-		return v8::ThrowException(v8::String::New("the filter expression contains an error\n"));
+		THROW_NODE_EXCEPTION(isolate, "the filter expression contains an error\n");
+		return;
 	}
 }
 
-void WrapCursor::setCursor(djondb::DjondbCursor* cursor) {
-	this->_cursor = cursor;
-}

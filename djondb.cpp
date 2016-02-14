@@ -33,7 +33,7 @@
 
 using namespace v8;
 
-void InitAll(Handle<Object> target) {
+void InitAll(Local<Object> target) {
 	  WrapCursor::Init(target);
 	  WrapConnection::Init(target);
 	  WrapConnectionManager::Init(target);

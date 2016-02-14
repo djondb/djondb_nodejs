@@ -9,45 +9,45 @@
 class WrapConnection: public node::ObjectWrap
 {
 	public:
-		static void Init(v8::Handle<v8::Object> target);
-		static v8::Handle<v8::Object> NewInstance(djondb::DjondbConnection* con);
+		static void Init(v8::Local<v8::Object> exports);
+		static void NewInstance(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		WrapConnection();
-		~WrapConnection();
+		WrapConnection(djondb::DjondbConnection* con);
+		virtual ~WrapConnection();
 
 		void setConnection(djondb::DjondbConnection* con);
 
+
 		djondb::DjondbConnection* _con;
+		static v8::Persistent<v8::Function> connection_constructor;
 	protected:
 	private:
+		static void open(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void close(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void isOpen(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> open(const v8::Arguments& args);
-		static v8::Handle<v8::Value> close(const v8::Arguments& args);
-		static v8::Handle<v8::Value> isOpen(const v8::Arguments& args);
+		static void shutdown(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> shutdown(const v8::Arguments& args);
+		static void insert(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void findByKey(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void find(const v8::FunctionCallbackInfo<v8::Value>& args); 
+		static void update(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void remove(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> insert(const v8::Arguments& args);
-		static v8::Handle<v8::Value> findByKey(const v8::Arguments& args);
-		static v8::Handle<v8::Value> find(const v8::Arguments& args); 
-		static v8::Handle<v8::Value> update(const v8::Arguments& args);
-		static v8::Handle<v8::Value> remove(const v8::Arguments& args);
+		static void dropNamespace(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void dbs(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void namespaces(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> dropNamespace(const v8::Arguments& args);
-		static v8::Handle<v8::Value> dbs(const v8::Arguments& args);
-		static v8::Handle<v8::Value> namespaces(const v8::Arguments& args);
+		static void beginTransaction(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void commitTransaction(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void rollbackTransaction(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> beginTransaction(const v8::Arguments& args);
-		static v8::Handle<v8::Value> commitTransaction(const v8::Arguments& args);
-		static v8::Handle<v8::Value> rollbackTransaction(const v8::Arguments& args);
+		static void host(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> host(const v8::Arguments& args);
+		static void executeUpdate(const v8::FunctionCallbackInfo<v8::Value>& args);
+		static void executeQuery(const v8::FunctionCallbackInfo<v8::Value>& args);
 
-		static v8::Handle<v8::Value> executeUpdate(const v8::Arguments& args);
-		static v8::Handle<v8::Value> executeQuery(const v8::Arguments& args);
-
-		static v8::Persistent<v8::Function> constructor;
-		static v8::Handle<v8::Value> New(const v8::Arguments& args);
+		static void New(const v8::FunctionCallbackInfo<v8::Value>& args);
 };
 
 #endif // WRAP_CONNECTION_H

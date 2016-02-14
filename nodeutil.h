@@ -30,5 +30,7 @@
 #include <string>
 
 std::string ToCString(const v8::String::Utf8Value& value);
-v8::Handle<v8::Value> parseJSON(v8::Handle<v8::Value> object);
+v8::Handle<v8::Value> parseJSON(v8::Isolate* isolate, v8::Handle<v8::Value> object);
+v8::Handle<v8::Value> toJson(v8::Isolate* isolate, v8::Handle<v8::Value> object, bool beautify);
+
 #endif /* NODEUTIL_INCLUDED_H */
