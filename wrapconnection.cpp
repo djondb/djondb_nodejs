@@ -194,8 +194,8 @@ void WrapConnection::insert(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		obj->_con->insert(db.c_str(), ns.c_str(), json.c_str());
 
 		args.GetReturnValue().Set(v8::Undefined(isolate));
-	} catch (...) {
-		THROW_NODE_EXCEPTION(isolate, "Not connected");
+	} catch (DjondbException exc) {
+		THROW_NODE_EXCEPTION(isolate, exc.what());
 		return;
 	}
 }
@@ -232,7 +232,7 @@ void WrapConnection::find(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 		RETURN_CURSOR(cursor);
 	} catch (ParseException e) {
-		THROW_NODE_EXCEPTION(isolate, "the filter expression contains an error\n");
+		THROW_NODE_EXCEPTION(isolate, e.what());
 		return;
 	} catch (DjondbException ex) {
 		THROW_NODE_EXCEPTION(isolate, ex.what());
@@ -355,7 +355,7 @@ void WrapConnection::dropNamespace(const v8::FunctionCallbackInfo<v8::Value>& ar
 
 		args.GetReturnValue().Set(v8::Boolean::New(isolate, result));
 	} catch (DjondbException& e) {
-		THROW_NODE_EXCEPTION(isolate, "Not connected 2");
+		THROW_NODE_EXCEPTION(isolate, e.what());
 		return;
 	}
 }
@@ -428,7 +428,7 @@ void WrapConnection::beginTransaction(const v8::FunctionCallbackInfo<v8::Value>&
 	try {
 		WrapConnection* obj = UNWRAPCONNECTION();
 		if ((obj == NULL) || (obj->_con == NULL)){
-			THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: connect(server, [port])");
+			THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: getConnection(server, [port])");
 			return;
 		}
 		obj->_con->beginTransaction();
@@ -451,7 +451,7 @@ void WrapConnection::commitTransaction(const v8::FunctionCallbackInfo<v8::Value>
 	try {
 		WrapConnection* obj = UNWRAPCONNECTION();
 		if ((obj == NULL) || (obj->_con == NULL)) {
-			THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: connect(server, [port])");
+			THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: getConnection(server, [port])");
 			return;
 		}
 		obj->_con->commitTransaction();
@@ -474,7 +474,7 @@ void WrapConnection::rollbackTransaction(const v8::FunctionCallbackInfo<v8::Valu
 	try {
 	WrapConnection* obj = UNWRAPCONNECTION();
 	if ((obj == NULL) || (obj->_con == NULL)) {
-		THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: connect(server, [port])");
+		THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: getConnection(server, [port])");
 		return;
 	}
 	obj->_con->rollbackTransaction();
@@ -519,7 +519,7 @@ void WrapConnection::executeUpdate(const v8::FunctionCallbackInfo<v8::Value>& ar
 	try {
 		WrapConnection* obj = UNWRAPCONNECTION();
 		if ((obj == NULL) || (obj->_con == NULL)) {
-			THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: connect(server, [port])");
+			THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: getConnection(server, [port])");
 			return;
 		}
 		obj->_con->executeUpdate(query.c_str());
@@ -547,7 +547,7 @@ void WrapConnection::executeQuery(const v8::FunctionCallbackInfo<v8::Value>& arg
 
 	WrapConnection* obj = UNWRAPCONNECTION();
 	if ((obj == NULL) || (obj->_con == NULL)) {
-		THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: connect(server, [port])");
+		THROW_NODE_EXCEPTION(isolate, "You're not connected to any db, please use: getConnection(server, [port])");
 		return;
 	}
 	try {
