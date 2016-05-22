@@ -3,14 +3,13 @@ var addon = require('djondb');
 
 console.log(addon);
 
-var manager = new addon.WrapConnectionManager();
-var con = manager.getConnection("localhost");
+var con = addon.getConnection("localhost");
 con.open();
 
 con.dropNamespace("test_nodejs", "nodens");
 con.insert("test_nodejs", "nodens", { name: "Test" });
 
-var cursor = con.executeQuery("select* from test_nodejs:nodens where name == 'Test'");
+var cursor = con.executeQuery("select * from test_nodejs:nodens where name == 'Test'");
 
 while (cursor.next()) {
 	var res = cursor.current();
@@ -21,4 +20,4 @@ while (cursor.next()) {
 	console.log("res2");
 	console.log(res2);
 }
-manager.releaseConnection(con);
+addon.releaseConnection(con);

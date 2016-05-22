@@ -120,8 +120,6 @@ void WrapCursor::current(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		THROW_NODE_EXCEPTION(isolate, "current is null, you should call next() before calling current()");
 		return;
 	}
-	printf("current %d \n", current);
-
 	char* str = current->toChar();
 
 	v8::Handle<v8::Value> jsonValue = parseJSON(isolate, v8::String::NewFromUtf8(isolate, str));
