@@ -762,6 +762,19 @@ NetworkInput.prototype = {
 
 }
 
+function BufferWrapper(size) {
+   var self = this;
+   self._bufferSize = size;
+   self._buffer = new Buffer(1024*100, 'hex');
+   self._buffer.fill(0);
+}
+
+BufferWrapper.prototype = {
+   writeInt: function(i) {
+      var self = this;
+   }
+}
+
 function NetworkOutput(client) {
    var self = this;
    self.bufferPos = 0;
@@ -769,8 +782,7 @@ function NetworkOutput(client) {
 
    var init = function(client) {
       self.client = client;
-      self.buffer = new Buffer(1024*100, 'hex');
-      self.buffer.fill(0);
+      self.buffer = new BufferWrapper(1024*100, 'hex');
    };
    init(client);
 }
@@ -778,8 +790,7 @@ function NetworkOutput(client) {
 NetworkOutput.prototype = {
    reset: function() {
       var self = this;
-      self.buffer = new Buffer(1024*100);
-      self.buffer.fill(0);
+      self.buffer = new Array(1024*100).join(0);
       self.bufferLen = 0;
       self.bufferPos = 0;
    },
