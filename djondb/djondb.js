@@ -780,14 +780,14 @@ BufferWrapper.prototype = {
 
    getBufferData: function(len) {
       var self = this;
-      /*
       console.log("getBufferData");
       var result = "";
       for (var x = 0; x < len; x++) {
          result += String.fromCharCode(self._buffer[x]);
       }
-      */
+      /*
       var result = self._buffer.toString("utf8", 0, len);
+      */
       return result;
    },
 
