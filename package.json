@@ -1,0 +1,28 @@
+{
+  "name": "djondb",
+  "version": "3.5.60826",
+  "description": "djondb native driver for djondb",
+  "main": "djondb.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/djondb/djondb_nodejs.git"
+  },
+  "keywords": [
+    "djondb",
+    "nosql",
+    "nodejs",
+    "driver"
+  ],
+  "dependencies": {
+     "uuid": "kelektiv/node-uuid"
+  },
+  "author": "Cross",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/djondb/djondb_nodejs/issues"
+  },
+  "homepage": "https://github.com/djondb/djondb_nodejs#readme"
+}
