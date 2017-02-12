@@ -645,8 +645,7 @@ function NetworkInput(client) {
 
    var init = function(client) {
       self.client = client;
-      self.buffer = new Buffer(1024*100, 'hex');
-      self.buffer.fill(0);
+      self.buffer = new BufferWrapper(1024*100);
    };
    init(client);
 }
@@ -654,8 +653,7 @@ function NetworkInput(client) {
 NetworkInput.prototype = {
    reset: function() {
       var self = this;
-      self.buffer = new Buffer(1024*100, 'hex');
-      self.buffer.fill(0);
+      self.buffer = new BufferWrapper(1024*100);
       self.bufferLen = 0;
       self.bufferPos = 0;
    },
@@ -679,7 +677,7 @@ NetworkInput.prototype = {
 
    readBoolean: function() {
       var self = this;
-      var i = self.buffer[self.bufferPos];
+      var i = self.buffer.readChar(self.bufferPos);
       var b = (i == 1);
       self.bufferPos += 1;
       return b;
@@ -687,7 +685,7 @@ NetworkInput.prototype = {
 
    readInt: function() {
       var self = this;
-      var i = self.buffer.readInt32LE(self.bufferPos);
+      var i = self.buffer.readInt(self.bufferPos);
       self.bufferPos += 4;
       return i;
    },
@@ -703,7 +701,7 @@ NetworkInput.prototype = {
    readString: function() {
       var self = this;
       var len = self.readInt();
-      var res = self.buffer.toString('utf-8', self.bufferPos, self.bufferPos + len);
+      var res = self.buffer.read(self.bufferPos, self.bufferPos + len);
       self.bufferPos += len;
       return res;
    },
@@ -770,9 +768,50 @@ function BufferWrapper(size) {
 }
 
 BufferWrapper.prototype = {
-   writeInt: function(i) {
+   writeInt: function(i, pos) {
       var self = this;
+      self._buffer.writeInt32LE(i, pos);
+   },
+
+   write: function(s, pos, len) {
+      var self = this;
+      self._buffer.write(s, pos, len, 'hex');
+   },
+
+   getBufferData: function(len) {
+      var self = this;
+      /*
+      console.log("getBufferData");
+      var result = "";
+      for (var x = 0; x < len; x++) {
+         result += String.fromCharCode(self._buffer[x]);
+      }
+      */
+      var result = self._buffer.toString("utf8", 0, len);
+      return result;
+   },
+
+   writeChar: function(c) {
+      var self = this;
+      self._buffer[self.bufferPos] = c;
+   },
+
+   readChar: function(pos) {
+      var self = this;
+      return self._buffer[pos];
+   },
+
+   readInt: function(pos) {
+      var self = this;
+      return self._buffer.readInt32LE(pos);
+   },
+
+   read: function(initPos, finalPos) {
+      var self = this;
+      var res = self._buffer.toString('utf-8', initPos, finalPos);
+      return res;
    }
+
 }
 
 function NetworkOutput(client) {
@@ -790,7 +829,7 @@ function NetworkOutput(client) {
 NetworkOutput.prototype = {
    reset: function() {
       var self = this;
-      self.buffer = new Array(1024*100).join(0);
+      self.buffer = new BufferWrapper(1024*100);
       self.bufferLen = 0;
       self.bufferPos = 0;
    },
@@ -874,31 +913,22 @@ NetworkOutput.prototype = {
 
    writeBoolean: function(b) {
       var self = this;
-      var i;
+      var c;
       if (b) {
-         i = String.fromCharCode(1);
+         c = String.fromCharCode(1);
       } else {
-         i = String.fromCharCode(0);
+         c = String.fromCharCode(0);
       }
-      self.buffer[self.bufferPos] = i;
+      self.buffer.writeChar(c);
       self.bufferPos += 1;
       self.bufferLen += 1;
    },
 
    writeInt: function(i) {
       var self = this;
-      self.buffer.writeInt32LE(i, self.bufferPos);
+      self.buffer.writeInt(i, self.bufferPos);
       self.bufferPos += 4;
       self.bufferLen += 4;
-   },
-
-   getBufferData: function() {
-      var self = this;
-      var result = "";
-      for (var x = 0; x < self.bufferLen; x++) {
-         result += String.fromCharCode(self.buffer[x]);
-      }
-      return result;
    },
 
    flush: function() {
@@ -908,7 +938,7 @@ NetworkOutput.prototype = {
        * for reference check the test/testEndianess
       var data = self.buffer.toString('utf8', 0, self.bufferLen);
       */
-      var result = self.getBufferData();
+      var result = self.buffer.getBufferData(self.bufferLen);
       self.client.write(result);
       self.reset();
    }
