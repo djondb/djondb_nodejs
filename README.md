@@ -8,7 +8,7 @@ Install
 
 To install just execute the following:
 
-npm install djondb_nodejs
+npm install djondb
 
 
 

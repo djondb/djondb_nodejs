@@ -31,7 +31,11 @@ var CURSORSTATUS = {
 
 function DjondbConnection(host, port) {
    this.host = host;
-   this.port = port;
+   if (port) {
+      this.port = port;
+   } else {
+      this.port = 1243;
+   }
 };
 
 function DjondbCursor(command, cursorId, firstPage) {
