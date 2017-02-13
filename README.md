@@ -1,15 +1,15 @@
 djondb nodejs module
 ====================
 
+Native implementation of djondb driver, for more information please check here: <a href="http://djondb.com/section/nodejs/">http://djondb.com/section/nodejs/</a>
 
-Prerrequisites
-==============
+Install
+=======
 
-node-gyp
+To install just execute the following:
 
-Build
-=====
+npm install djondb_nodejs
 
-node build.js
+
 
 
