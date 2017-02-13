@@ -58,6 +58,12 @@ function testEndianess(callback) {
    var buffer = new Buffer(1024*100, 'hex');
    buffer.writeInt32LE(62377, 0);
    buffer.writeInt32LE(178, 4);
+
+   var expect1 = buffer.readInt32LE(0);
+   assert.equal(expect1, 62377);
+   var expect2 = buffer.readInt32LE(4);
+   assert.equal(expect2, 178);
+
    var data = buffer.toString('utf8', 0, 16);
    var numbers = "";
    for (var x = 0; x < 16; x++) {
@@ -90,15 +96,12 @@ function testEndianess(callback) {
 function testInsertHighNumbers(callback) {
    console.log("testInsertHighNumbers");
    con.dropNamespace("testdb", "testhn", function(error) {
-      console.log("testInsertHighNumbers1: " + error);
       assert.ifError(error);
       var salary = 62377;
       con.insert("testdb", "testhn", { "name": "JohnInsert", "lastName": "Smith", "salary": salary}, function(error) {
-         console.log("testInsertHighNumbers2");
          assert.ifError(error);
          helperFind("testdb", "testhn", function(records) {
             assert.equal(1, records.length);
-            console.log(records);
             assert.equal(salary, records[0].salary);
             callback();
          });
@@ -117,11 +120,33 @@ function testInsertFindUpdate(callback) {
             records[0].age = 20;
             con.update("testdb", "testinsupd", records[0], function(error) {
                assert.ifError(error);
-               console.log("before find after update");
                con.find("testdb", "testinsupd", "*", "age = 20", function(error, cursor) {
                   assert.ifError(error);
                   collectAllFromCursor(cursor, function(results) {
                      assert.equal(1, results.length);
+                     callback();
+                  });
+               });
+            });
+         });
+      });
+   });
+}
+
+function testInsertFindRemove(callback) {
+   console.log("testInsertFindRemove");
+   con.dropNamespace("testdb", "testinsupdrem", function(error) {
+      assert.ifError(error);
+      con.insert("testdb", "testinsupdrem", { "name": "JohnInsert", "lastName": "Smith", "age": 10}, function(error) {
+         assert.ifError(error);
+         helperFind("testdb", "testinsupdrem", function(records) {
+            assert.equal(1, records.length);
+            con.remove("testdb", "testinsupdrem", records[0]["_id"], records[0]["_revision"], function(error) {
+               assert.ifError(error);
+               con.find("testdb", "testinsupdrem", "*", "", function(error, cursor) {
+                  assert.ifError(error);
+                  collectAllFromCursor(cursor, function(results) {
+                     assert.equal(0, results.length);
                      callback();
                   });
                });
@@ -142,7 +167,6 @@ function testInsertFindUpdateWithDQL(callback) {
             records[0].age = 20;
             var updatedql = "update " + JSON.stringify(records[0]) + " into testdb:testinsupddql";
 
-            console.log("beforeUpdate: " + updatedql);
             con.executeQuery(updatedql, function(error) {
                console.log("executeQuery");
                assert.ifError(error);
@@ -241,7 +265,7 @@ function testTXRollback(callback) {
             con.rollbackTransaction(function(error) {
                assert.ifError(error);
                helperFind("testdb", "testtxrollback", function(results) {
-                  assert.equal(1, results.length);
+                  assert.equal(0, results.length);
                   callback();
                });
             });
@@ -287,18 +311,74 @@ function testIndex(callback) {
    });
 }
 
+function testIndexDQL(callback) {
+   console.log("testIndexDQL");
+   con.dropNamespace("testdb", "testindexDQL", function(error) {
+      assert.ifError(error);
+      con.insert("testdb", "testindexDQL", { "name": "JohnInsert", "lastName": "Smith", "age": 10}, function(error) {
+         assert.ifError(error);
+         helperFind("testdb", "testindexDQL", function(records) {
+            assert.equal(1, records.length);
+            var indexDef = {
+               db: "testdb",
+               ns: "testindex",
+               name: "test",
+               fields: [
+                  { path: "name" }
+               ]
+            };
+            con.executeQuery("CREATE INDEX test on testdb:testindexDQL using (name)", function(error) {
+               assert.ifError(error);
+               con.find("testdb", "testindexDQL", "*", "name = 'John'", function(error, cursor) {
+                  assert.ifError(error);
+                  cursor.nextPage(function(error, page) {
+                     assert.ifError(error);
+                     if (page) {
+                        rows = page.length;
+                     } else {
+                        rows = 0;
+                     }
+                     assert.equal(1, records.length);
+                     callback();
+                  });
+               });
+            });
+         });
+      });
+   });
+}
+
 function testExecuteQuery(callback) {
    console.log("testExecuteQuery");
-   con.executeQuery("drop namespace 'testdb', 'testexecutequery'", function(resDrop) {
+   con.executeQuery("drop namespace 'testdb', 'testexecutequery'", function(error, resDrop) {
       var data = { "name": "JohnInsert", "lastName": "Smith", "age": 10}; 
       var insertDQL = "insert " + JSON.stringify(data) + " into testdb:testexecutequery";
 
       con.executeQuery(insertDQL, function() {
-         con.executeQuery("select * from testdb:testexecutequery", function(cursor) {
+         con.executeQuery("select * from testdb:testexecutequery", function(error, cursor) {
             collectAllFromCursor(cursor, function(records) {
                assert.equal(1, records.length);
                callback();
             });
+         });
+      });
+   });
+}
+
+function testExecuteUpdate(callback) {
+   console.log("testExecuteUpdate");
+   con.executeUpdate("drop namespace 'testdb', 'testexecutequery'", function(error, resDrop) {
+      assert.ifError(error);
+      var data = { "name": "JohnInsert", "lastName": "Smith", "age": 10}; 
+      var insertDQL = "insert " + JSON.stringify(data) + " into testdb:testexecutequery";
+
+      con.executeUpdate(insertDQL, function(error, res) {
+         assert.ifError(error);
+         con.executeUpdate("select * from testdb:testexecutequery", function(error, res) {
+            // select statements are not allowed under executeUpdate
+            assert.equal(true, error != undefined);
+            assert.equal(601, error.resultCode);
+            callback();
          });
       });
    });
@@ -326,7 +406,6 @@ function executeTests(tests) {
       if (i < tests.length) {
          var test = tests[i];
          i++;
-         console.log("Executing next test");
          test(executeNextTest);
       } else {
          console.log("completed");
@@ -340,7 +419,6 @@ con.open(function() {
    var tests = [];
    tests.push(testEndianess);
    tests.push(testInsertHighNumbers);
-      /*
    tests.push(testEmptyQueryError);
    tests.push(testInsertFind);
    tests.push(testShows);
@@ -348,9 +426,13 @@ con.open(function() {
    tests.push(testTXCommit);
    tests.push(testTXRollback);
    tests.push(testIndex);
+   tests.push(testIndexDQL);
    tests.push(testInsertFindUpdate);
    tests.push(testInsertFindUpdateWithDQL);
    tests.push(testExecuteQuery);
+   tests.push(testExecuteUpdate);
+   tests.push(testInsertFindRemove);
+      /*
    tests.push(testBackup);
    */
    executeTests(tests);

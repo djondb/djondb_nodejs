@@ -358,6 +358,35 @@ Command.prototype = {
       }
    },
 
+   processRemoveResult: function() {
+      var self = this;
+      var result = self._netInput.readBoolean();
+
+      return result;
+   },
+
+   remove: function(db, ns, id, revision, callback) {
+      var self = this;
+      if (self.executingCommand) {
+         self.pushPendingCommand(self.remove, [db, ns, id, revision, callback]);
+      } else {
+         self.writeHeader(COMMANDTYPE.REMOVE);
+
+         self._netOutput.writeString(db);
+         self._netOutput.writeString(ns);
+         self._netOutput.writeString(id);
+         if (revision) {
+            self._netOutput.writeString(revision);
+         } else {
+            self._netOutput.writeString("");
+         }
+         self.pushCallback(function(data) {
+            self.readResults(self.processRemoveResult, data, callback);
+         });
+         self._netOutput.flush();
+      }
+   },
+
    processFindResult: function() {
       var self = this;
       var cursorId = self._netInput.readString();
@@ -576,7 +605,7 @@ Command.prototype = {
             result = self.processInsertResult();
             result = self.createStandardOutputForNonCursorResult(result == 1);
          } else if (commandType == COMMANDTYPE.UPDATE) {
-            result = self.processUpdateResult(data, callback);
+            result = self.processUpdateResult();
             result = self.createStandardOutputForNonCursorResult(result == 1);
          } else if (commandType == COMMANDTYPE.FIND) {
             result = self.processFindResult();
@@ -590,6 +619,11 @@ Command.prototype = {
             result = self.processShowNamespacesResult();
             result = self.wrapNamespacesResultAsCursor(result);
          } else if (commandType == COMMANDTYPE.REMOVE) {
+            result = self.processRemoveResult();
+            result = self.createStandardOutputForNonCursorResult(result == 1);
+         } else if (commandType == COMMANDTYPE.CREATEINDEX) {
+            result = self.processCreateIndexResult();
+            result = self.createStandardOutputForNonCursorResult(result == 1);
          }
          // Execute is a wrapper therefore the first error has to be discarded
          self.readErrorInformation(self._netInput);
@@ -609,6 +643,55 @@ Command.prototype = {
          self._netOutput.writeString(query);
          self.pushCallback(function(data) {
             self.readResults(self.processExecuteQueryResult, data, callback);
+         });
+         self._netOutput.flush();
+      }
+   },
+
+   processExecuteUpdateResult: function()  {
+      var self = this;
+
+      var flag = self._netInput.readInt();
+      var result;
+
+      if (flag == 1) {
+         var commandType = self._netInput.readInt();
+         if (commandType == COMMANDTYPE.INSERT) {
+            result = self.processInsertResult();
+         } else if (commandType == COMMANDTYPE.UPDATE) {
+            result = self.processUpdateResult();
+         } else if (commandType == COMMANDTYPE.FIND) {
+            result = self.processFindResult();
+         } else if (commandType == COMMANDTYPE.DROPNAMESPACE) {
+            result = self.processDropNamespaceResult();
+         } else if (commandType == COMMANDTYPE.SHOWDBS) {
+            result = self.processShowDbsResult();
+         } else if (commandType == COMMANDTYPE.SHOWNAMESPACES) {
+            result = self.processShowNamespacesResult();
+         } else if (commandType == COMMANDTYPE.REMOVE) {
+            result = self.processRemoveResult();
+         } else if (commandType == COMMANDTYPE.CREATEINDEX) {
+            result = self.processCreateIndexResult();
+         }
+         result = self.createStandardOutputForNonCursorResult(result == 1);
+         // Execute is a wrapper therefore the first error has to be discarded
+         self.readErrorInformation(self._netInput);
+      } else {
+         self.readErrorInformation(self._netInput);
+      }
+      return result;
+   },
+
+   executeUpdate: function(query, callback) {
+      var self = this;
+      if (self.executingCommand) {
+         self.pushPendingCommand(self.executeUpdate, [query, callback]);
+      } else {
+         self.writeHeader(COMMANDTYPE.EXECUTEUPDATE);
+
+         self._netOutput.writeString(query);
+         self.pushCallback(function(data) {
+            self.readResults(self.processExecuteUpdateResult, data, callback);
          });
          self._netOutput.flush();
       }
@@ -780,14 +863,7 @@ BufferWrapper.prototype = {
 
    getBufferData: function(len) {
       var self = this;
-      console.log("getBufferData");
-      var result = "";
-      for (var x = 0; x < len; x++) {
-         result += String.fromCharCode(self._buffer[x]);
-      }
-      /*
-      var result = self._buffer.toString("utf8", 0, len);
-      */
+      var result = Buffer.concat([self._buffer], len);
       return result;
    },
 
@@ -933,13 +1009,8 @@ NetworkOutput.prototype = {
 
    flush: function() {
       var self = this;
-      /*
-       * encoding to utf8 is creating an unexpected behaviour
-       * for reference check the test/testEndianess
-      var data = self.buffer.toString('utf8', 0, self.bufferLen);
-      */
       var result = self.buffer.getBufferData(self.bufferLen);
-      self.client.write(result);
+      self.client.write(result, 'hex');
       self.reset();
    }
 };
@@ -996,6 +1067,15 @@ DjondbConnection.prototype = {
    update: function(db, ns, obj, callback) {
       var self = this;
       self.command.update(db, ns, obj, (error, result) => {
+         if (callback) {
+            callback(error, result);
+         }
+      });
+   },
+
+   remove: function(db, ns, id, revision, callback) {
+      var self = this;
+      self.command.remove(db, ns, id, revision, (error, result) => {
          if (callback) {
             callback(error, result);
          }
@@ -1064,6 +1144,15 @@ DjondbConnection.prototype = {
    executeQuery: function(query, callback) {
       var self = this;
       self.command.executeQuery(query, (error, result) => {
+         if (callback) {
+            callback(error, result);
+         }
+      });
+   },
+
+   executeUpdate: function(query, callback) {
+      var self = this;
+      self.command.executeUpdate(query, (error, result) => {
          if (callback) {
             callback(error, result);
          }
