@@ -1,6 +1,6 @@
 {
   "name": "djondb",
-  "version": "3.5.70214",
+  "version": "3.5.70215",
   "description": "djondb native driver for djondb",
   "main": "djondb.js",
   "scripts": {

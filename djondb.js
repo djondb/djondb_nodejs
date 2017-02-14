@@ -850,8 +850,7 @@ NetworkInput.prototype = {
 function BufferWrapper(size) {
    var self = this;
    self._bufferSize = size;
-   self._buffer = new Buffer(1024*100, 'hex');
-   self._buffer.fill(0);
+   self._buffer = Buffer.alloc(size, 0, 'hex');
 }
 
 BufferWrapper.prototype = {
