@@ -850,7 +850,12 @@ NetworkInput.prototype = {
 function BufferWrapper(size) {
    var self = this;
    self._bufferSize = size;
-   self._buffer = Buffer.alloc(size, 0, 'hex');
+   if (Buffer.alloc) {
+      self._buffer = Buffer.alloc(size, 0, 'hex');
+   } else {
+      self._buffer = new Buffer(size);
+      self._buffer.fill(0, 0, size, 'hex');
+   }
 }
 
 BufferWrapper.prototype = {
@@ -1169,6 +1174,13 @@ DjondbConnection.prototype = {
             callback(error, result);
          }
       });
+   },
+
+   close: function() {
+      var self = this;
+      if (self.client) {
+         self.client.end();
+      }
    }
 
 };
