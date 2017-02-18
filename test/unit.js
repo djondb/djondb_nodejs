@@ -59,8 +59,12 @@ function testCursor(callback) {
             assert.ifError(error);
             var result = [];
             con.find("testdb", "testcursor", "*", "", (err, cursor) => {
-               cursor.next((hasNext) => {
-                  result.push(cursor.current());
+               cursor.next((err, hasNext) => {
+                  assert.ifError(err);
+                  assert.equal(true, hasNext);
+                  var element = cursor.current();
+                  assert.equal(true, element != undefined);
+                  result.push(element);
                   assert.equal(result.length, 1);
                   callback();
                });
@@ -430,6 +434,7 @@ function executeTests(tests) {
          test(executeNextTest);
       } else {
          console.log("completed");
+         con.close();
       }
 
    }

@@ -88,15 +88,18 @@ DjondbCursor.prototype = {
                   self._rows = self._rows.concat(page);
                   self._count = self._rows.length;
                   result = true;
+
+                  self._current = self._rows[self._position];
+                  self._position += 1;
                }
                if (callback) {
-                  callback.apply(this, [error, result]);
+                  callback.apply(this, [undefined, result]);
                }
             });
          } else {
             result = false;
             if (callback) {
-               callback.apply(this, [result]);
+               callback.apply(this, [undefined, result]);
             }
          }
       }
@@ -753,7 +756,7 @@ NetworkInput.prototype = {
    append: function(data, len) {
       var self = this;
 
-      /*
+         /*
       for (var x = 0; x < len; x++) {
          self.buffer[self.bufferPos + x] = data.charCodeAt(x);
       }
