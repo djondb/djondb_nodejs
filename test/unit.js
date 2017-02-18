@@ -49,6 +49,27 @@ function testInsertFind(callback) {
    });
 }
 
+function testCursor(callback) {
+   console.log("testCursor");
+   con.dropNamespace("testdb", "testcursor", function(error) {
+      assert.ifError(error);
+      con.insert("testdb", "testcursor", { "name": "JohnInsert", "lastName": "Smith", "age": 10}, function(error) {
+         assert.ifError(error);
+         con.insert("testdb", "testcursor", { "name": "JohnInsert", "lastName": "Smith", "age": 10}, function(error) {
+            assert.ifError(error);
+            var result = [];
+            con.find("testdb", "testcursor", "*", "", (err, cursor) => {
+               cursor.next((hasNext) => {
+                  result.push(cursor.current());
+                  assert.equal(result.length, 1);
+                  callback();
+               });
+            });
+         });
+      });
+   });
+}
+
 function testEndianess(callback) {
    console.log("testEndianess");
    //var expected = "\xa9\xf3\x00\x00";
@@ -432,7 +453,8 @@ con.open(function() {
    tests.push(testExecuteQuery);
    tests.push(testExecuteUpdate);
    tests.push(testInsertFindRemove);
-      /*
+   tests.push(testCursor);
+   /*
    tests.push(testBackup);
    */
    executeTests(tests);

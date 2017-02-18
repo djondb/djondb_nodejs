@@ -87,7 +87,7 @@ DjondbCursor.prototype = {
                } else {
                   self._rows = self._rows.concat(page);
                   self._count = self._rows.length;
-                  result = self.next(callback);
+                  result = true;
                }
                if (callback) {
                   callback.apply(this, [error, result]);
