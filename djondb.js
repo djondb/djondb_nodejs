@@ -69,7 +69,7 @@ DjondbCursor.prototype = {
 			self._current = self._rows[self._position];
 			self._position += 1;
          if (callback) {
-            callback.apply(this, [result]);
+            callback.apply(this, [undefined, result]);
          }
 		} else {
 			if (self._status == CURSORSTATUS.CS_LOADING) {
@@ -768,7 +768,12 @@ NetworkInput.prototype = {
    readBoolean: function() {
       var self = this;
       var i = self.buffer.readChar(self.bufferPos);
+      console.log("i: " + i);
+      var code = i.charCodeAt(0);
+      var b = (code == 1);
+      /*
       var b = (i == 1);
+      */
       self.bufferPos += 1;
       return b;
    },
@@ -1019,10 +1024,13 @@ NetworkOutput.prototype = {
       var self = this;
       var c;
       if (b) {
+         console.log("write: " + b);
          c = String.fromCharCode(1);
+         console.log("write: " + c.charCodeAt(0));
       } else {
          c = String.fromCharCode(0);
       }
+      console.log("writing: " + c);
       self.buffer.writeChar(c);
       self.bufferPos += 1;
       self.bufferLen += 1;
