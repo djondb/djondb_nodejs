@@ -39,7 +39,7 @@ function testInsertFind(callback) {
    console.log("testInsertFind");
    con.dropNamespace("testdb", "testns", function(error) {
       assert.ifError(error);
-      con.insert("testdb", "testns", { "name": "JohnInsert", "lastName": "Smith", "age": 10}, function(error) {
+      con.insert("testdb", "testns", { "name": "JohnInsert", "lastName": "Smith", "age": 10, "salary": 150000.12}, function(error) {
          assert.ifError(error);
          helperFind("testdb", "testns", function(records) {
             assert.equal(1, records.length);

@@ -780,6 +780,13 @@ NetworkInput.prototype = {
       return i;
    },
 
+   readDouble: function() {
+      var self = this;
+      var i = self.buffer.readDouble(self.bufferPos);
+      self.bufferPos += 8;
+      return i;
+   },
+
    readLong: function() {
       var self = this;
       var lower = self.readInt();
@@ -867,6 +874,11 @@ BufferWrapper.prototype = {
       self._buffer.writeInt32LE(i, pos);
    },
 
+   writeDouble: function(d, pos) {
+      var self = this;
+      self._buffer.writeDoubleLE(d, pos);
+   },
+
    write: function(s, pos, len) {
       var self = this;
       self._buffer.write(s, pos, len, 'hex');
@@ -891,6 +903,11 @@ BufferWrapper.prototype = {
    readInt: function(pos) {
       var self = this;
       return self._buffer.readInt32LE(pos);
+   },
+
+   readDouble: function(pos) {
+      var self = this;
+      return self._buffer.readDoubleLE(pos);
    },
 
    read: function(initPos, finalPos) {
@@ -1016,6 +1033,13 @@ NetworkOutput.prototype = {
       self.buffer.writeInt(i, self.bufferPos);
       self.bufferPos += 4;
       self.bufferLen += 4;
+   },
+
+   writeDouble: function(d) {
+      var self = this;
+      self.buffer.writeDouble(d, self.bufferPos);
+      self.bufferPos += 8;
+      self.bufferLen += 8;
    },
 
    flush: function() {
